@@ -17,34 +17,95 @@ class ViewController: UIViewController {
     var changingHeight = NSLayoutConstraint()
     var stringVal = ["1","2","3","1","2","3"]
     
+    var trayOriginalCenter: CGPoint!
+    
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+    }
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
         setUpBottomView()
     }
     
     func setUpBottomView() {
-        let v = UIView()
-        v.layer.cornerRadius = 10
-        v.dropShadow(scale: true)
-        v.backgroundColor = .green
-        v.isUserInteractionEnabled = true
-        self.view.addSubview(v)
+        popUpView.alpha = 0
+        popUpView.layer.cornerRadius = 10
+        popUpView.dropShadow(scale: true)
+        popUpView.backgroundColor = .green
+        popUpView.isUserInteractionEnabled = true
+        self.view.addSubview(popUpView)
         view.bringSubviewToFront(btn)
-        v.translatesAutoresizingMaskIntoConstraints = false
+        popUpView.translatesAutoresizingMaskIntoConstraints = false
 
-        let bottomConst = NSLayoutConstraint(item: v, attribute: .bottomMargin, relatedBy: .equal, toItem: view, attribute: .bottomMargin, multiplier: 1, constant: 50)
-        let widthConst =  NSLayoutConstraint(item: v, attribute: .width, relatedBy: .equal, toItem: nil, attribute: .notAnAttribute, multiplier: 1, constant: btn.frame.width)
-        let heightConst = NSLayoutConstraint(item: v, attribute: .height, relatedBy: .equal, toItem: nil, attribute: .notAnAttribute, multiplier: 1, constant: 150)
-        let center = NSLayoutConstraint(item: v, attribute: .centerX, relatedBy: .equal, toItem: btn, attribute: .centerX, multiplier: 1, constant: 0)
+        let bottomConst = NSLayoutConstraint(item: popUpView, attribute: .bottomMargin, relatedBy: .equal, toItem: view, attribute: .bottomMargin, multiplier: 1, constant: 50)
+        let widthConst =  NSLayoutConstraint(item: popUpView, attribute: .width, relatedBy: .equal, toItem: nil, attribute: .notAnAttribute, multiplier: 1, constant: btn.frame.width)
+        let heightConst = NSLayoutConstraint(item: popUpView, attribute: .height, relatedBy: .equal, toItem: nil, attribute: .notAnAttribute, multiplier: 1, constant: 150)
+        let center = NSLayoutConstraint(item: popUpView, attribute: .centerX, relatedBy: .equal, toItem: btn, attribute: .centerX, multiplier: 1, constant: 0)
+        
         changingConst = bottomConst
         changingHeight = heightConst
+        
         view.addConstraints([center,bottomConst,widthConst,heightConst])
-        let swipeGesture = UISwipeGestureRecognizer(target: self, action: #selector(swipeGesture(_:)))
-        swipeGesture.direction = .down
-        v.addGestureRecognizer(swipeGesture)
-        popUpView = v
-        popUpView.alpha = 0
+        
+//        let swipeGesture = UISwipeGestureRecognizer(target: self, action: #selector(swipeGesture(_:)))
+//        swipeGesture.direction = .down
+//        popUpView.addGestureRecognizer(swipeGesture)
+//
+        let panGesture = UIPanGestureRecognizer(target: self, action: #selector(gesture))
+        popUpView.addGestureRecognizer(panGesture)
+        
         setUpTableView()
+    }
+    
+    @objc func gesture(_ sender: UIPanGestureRecognizer) {
+        
+        let panView = sender.view!
+        let point = sender.translation(in: view)
+        let velocity = sender.velocity(in: view)
+        
+        
+        if velocity.y > 0 {
+            print("+SASvelocity.y - \(velocity.y)")
+            UIView.animate(withDuration: 0.3, animations: { () -> Void in
+           //trayView.center = trayDown
+           })
+        } else {
+             print("-SASvelocity.y - \(velocity.y)")
+            UIView.animate(withDuration: 0.3, animations: { () -> Void in
+           //trayView.center = trayUp
+           })
+        }
+      //  if point.y > 0 {
+//        panView.center = CGPoint(x: panView.center.x , y: panView.center.y + point.y )
+             
+             //print("SAS point.y = \(point.y)")
+      //  }
+      //print("SAS point.y = \(point.y)")
+      // sender.setTranslation(.zero, in: view)
+        
+        switch sender.state {
+        case .began:
+            trayOriginalCenter = panView.center
+            print("BEGAN - point.x = \(point.x), point.y = \(point.y)")
+            
+        case .changed:
+             panView.center = CGPoint(x: trayOriginalCenter.x, y: trayOriginalCenter.y + point.y)
+        case .ended:
+             print("ENDED - point.x = \(point.x), point.y = \(point.y)")
+    //            UIView.animate(withDuration: 0.2) {
+    //                panView.center = self.oldPoint
+    //            }
+        case .failed:
+            print("failed")
+        case .possible:
+            print("possible")
+        case .cancelled:
+            print("cancelled")
+
+        default:
+             print("default")
+        }
     }
     
     func setUpTableView() {
@@ -71,6 +132,8 @@ class ViewController: UIViewController {
        changingHeight.constant = tableV.contentSize.height + 10
     }
     
+    
+    
     @objc func swipeGesture(_ sender: UISwipeGestureRecognizer) {
 
         changingConst.constant = btn.frame.height+18
@@ -83,8 +146,14 @@ class ViewController: UIViewController {
         }
 
     }
+    
+    var firstCenterX: CGFloat = 0
+    var firstCenterY: CGFloat = 0
 
     @IBAction func popUpAction(_ sender: Any) {
+//        firstCenterX = popUpView.center.x
+//        firstCenterY = popUpView.center.y
+//        print("SAS - CenterX = \(popUpView.center.x), CenterY = \(popUpView.center.y)")
         callAView()
     }
     
