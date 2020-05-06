@@ -19,6 +19,8 @@ class ViewController: UIViewController {
     
     var trayOriginalCenter: CGPoint!
     
+    var initialCenter = CGPoint()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -29,6 +31,7 @@ class ViewController: UIViewController {
     }
     
     func setUpBottomView() {
+      
         popUpView.alpha = 0
         popUpView.layer.cornerRadius = 10
         popUpView.dropShadow(scale: true)
@@ -38,7 +41,7 @@ class ViewController: UIViewController {
         view.bringSubviewToFront(btn)
         popUpView.translatesAutoresizingMaskIntoConstraints = false
 
-        let bottomConst = NSLayoutConstraint(item: popUpView, attribute: .bottomMargin, relatedBy: .equal, toItem: view, attribute: .bottomMargin, multiplier: 1, constant: 50)
+        let bottomConst = NSLayoutConstraint(item: popUpView, attribute: .bottom, relatedBy: .equal, toItem: btn, attribute: .top, multiplier: 1, constant: 50)
         let widthConst =  NSLayoutConstraint(item: popUpView, attribute: .width, relatedBy: .equal, toItem: nil, attribute: .notAnAttribute, multiplier: 1, constant: btn.frame.width)
         let heightConst = NSLayoutConstraint(item: popUpView, attribute: .height, relatedBy: .equal, toItem: nil, attribute: .notAnAttribute, multiplier: 1, constant: 150)
         let center = NSLayoutConstraint(item: popUpView, attribute: .centerX, relatedBy: .equal, toItem: btn, attribute: .centerX, multiplier: 1, constant: 0)
@@ -58,53 +61,59 @@ class ViewController: UIViewController {
         setUpTableView()
     }
     
+    var fixedPoint = CGPoint()
+    
     @objc func gesture(_ sender: UIPanGestureRecognizer) {
-        
-        let panView = sender.view!
-        let point = sender.translation(in: view)
-        let velocity = sender.velocity(in: view)
-        
-        
-        if velocity.y > 0 {
-            print("+SASvelocity.y - \(velocity.y)")
-            UIView.animate(withDuration: 0.3, animations: { () -> Void in
-           //trayView.center = trayDown
-           })
-        } else {
-             print("-SASvelocity.y - \(velocity.y)")
-            UIView.animate(withDuration: 0.3, animations: { () -> Void in
-           //trayView.center = trayUp
-           })
+        guard sender.view != nil else {return}
+        let piece = sender.view!
+        // Get the changes in the X and Y directions relative to
+        // the superview's coordinate space.
+        let translation = sender.translation(in: piece.superview)
+        if sender.state == .began {
+           // Save the view's original position.
+           self.initialCenter = piece.center
         }
-      //  if point.y > 0 {
-//        panView.center = CGPoint(x: panView.center.x , y: panView.center.y + point.y )
-             
-             //print("SAS point.y = \(point.y)")
-      //  }
-      //print("SAS point.y = \(point.y)")
-      // sender.setTranslation(.zero, in: view)
-        
-        switch sender.state {
-        case .began:
-            trayOriginalCenter = panView.center
-            print("BEGAN - point.x = \(point.x), point.y = \(point.y)")
+           // Update the position for the .began, .changed, and .ended states
+        if sender.state != .cancelled {
+           // Add the X and Y translation to the view's original position.
+           
+           print("FFfixedPoint.y = \(fixedPoint.y)")
+            print("FFFinitialCenter.y = \(initialCenter.y)")
+            var ss = initialCenter.y + translation.y
             
-        case .changed:
-             panView.center = CGPoint(x: trayOriginalCenter.x, y: trayOriginalCenter.y + point.y)
-        case .ended:
-             print("ENDED - point.x = \(point.x), point.y = \(point.y)")
-    //            UIView.animate(withDuration: 0.2) {
-    //                panView.center = self.oldPoint
-    //            }
-        case .failed:
-            print("failed")
-        case .possible:
-            print("possible")
-        case .cancelled:
-            print("cancelled")
-
-        default:
-             print("default")
+             print("ss.y = \(ss)")
+            if ss > fixedPoint.y {
+//                if initialCenter.y > fixedPoint.y {
+//                    initialCenter.y = fixedPoint.y
+//                }
+                let newCenter = CGPoint(x: initialCenter.x , y: ss)
+                
+                print("FFFinewCenter.y = \(newCenter.y)")
+                
+                print("NewVal.y = \(view.frame.height - fixedPoint.y )")
+                print("MMMM.y = \(view.frame.height - newCenter.y )")
+                
+                
+                piece.center = newCenter
+                print("ASAnewCenter.y = \(newCenter.y)")
+                
+            } else {
+                if initialCenter.y < fixedPoint.y {
+                    initialCenter.y = fixedPoint.y
+                }
+            }
+           
+            
+            
+          
+          
+        }
+        else {
+           // On cancellation, return the piece to its original location.
+//            if initialCenter.y > fixedPoint.y {
+//                initialCenter.y = fixedPoint.y
+//            }
+           piece.center = initialCenter
         }
     }
     
@@ -159,14 +168,19 @@ class ViewController: UIViewController {
     
     func callAView() {
 
-        changingConst.constant = -(btn.frame.height+18)
+        changingConst.constant = -(10)
         UIView.animate(withDuration: 1) {
 
             self.view.layoutIfNeeded()
             let delay = ((40 / self.popUpView.frame.height) * 100) / 100
             UIView.animate(withDuration: 1, delay: TimeInterval(delay), options: .curveEaseIn, animations: {
                 self.popUpView.alpha = 1
-            }, completion: nil)
+            }){ (_) in
+                self.fixedPoint = self.popUpView.center
+                print("SASAself.fixedPoint = \(self.fixedPoint)")
+            }
+            
+            
         }
     }
 
